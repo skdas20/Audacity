@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: audacia_backend
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - NVIDIA_VISIBLE_DEVICES=all
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data
+    depends_on:
+      - redis
+      - minio
+
+  frontend:
+    build: ./frontend
+    container_name: audacia_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+
+  redis:
+    image: redis:7
+    container_name: audacia_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+  minio:
+    image: minio/minio:latest
+    container_name: audacia_minio
+    restart: unless-stopped
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./minio_data:/data
+
+  worker:
+    build: ./backend
+    container_name: audacia_worker
+    command: celery -A deps.celery_app worker --loglevel=info
+    depends_on:
+      - redis
+      - minio
+    volumes:
+      - ./models:/app/models
+      - ./data:/app/data

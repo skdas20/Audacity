@@ -1,0 +1,12 @@
+# Ignore large datasets and runtime artifacts
+/data/raw/
+/data/raw/*
+minio_data/
+models/
+*.tar.bz2
+*.tgz
+*.ckpt
+frontend/node_modules/
+.env
+.vscode/
+__pycache__/
